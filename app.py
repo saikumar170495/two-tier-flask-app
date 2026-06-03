@@ -1,4 +1,5 @@
 import os
+import time  # 1. Added time module for the delay loop
 from flask import Flask, render_template, request, redirect, url_for, jsonify
 from flask_mysqldb import MySQL
 
@@ -43,6 +44,16 @@ def submit():
     return jsonify({'message': new_message})
 
 if __name__ == '__main__':
-    init_db()
+    # 2. Added a robust retry loop to catch database race conditions
+    while True:
+        try:
+            print("Connecting to MySQL and initializing database...", flush=True)
+            init_db()
+            print("Database initialization successful!", flush=True)
+            break  # Break the loop once the connection succeeds
+        except Exception as e:
+            print(f"Database not ready yet ({e}). Retrying in 5 seconds...", flush=True)
+            time.sleep(5)
+
     app.run(host='0.0.0.0', port=5000, debug=True)
 
